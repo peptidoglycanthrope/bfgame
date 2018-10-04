@@ -39,10 +39,12 @@ def update(tup):
 			pc = i
 		else:
 			stac.append(pc)
+		redraw = False
 	elif instr == "]":
 		last = stac.pop()
 		if m[mp] > 0:
 			pc = last-1
+		redraw = False
 	else:
 		return None
 	return ((p,pc+1,mem,mp,stac,c+1),redraw)
@@ -65,8 +67,13 @@ def run(p,steps=1000,t=[0]):
 	state = (p,0,t,0,[],0)
 	drawState(state)
 	for i in range(steps):
+		tpp = update(state)
+		if tpp == None:
+			print("Stop that, bad.")
+			return None
 		(state, redraw) = update(state)
-		drawState(state)
+		if redraw:
+			drawState(state)
 		if state == None:
 			print("Crashed")
 			return None
@@ -76,6 +83,16 @@ def run(p,steps=1000,t=[0]):
 	return state
 
 def drawState(state):
+	display = generateDisplay(state)
+	# AKI WAS HERE
+	# AKI LOVES U <3
+	sys.stdout.write("\033[H")
+	sys.stdout.write(display)
+	sys.stdout.flush()
+	time.sleep(.025)
+
+
+def generateDisplay(state):
 	(p,pc,m,mp,s,c) = state
 	toprow = "╔" + "╦".join(list(map(lambda x: (len(str(x))+2)*"═", m))) + "╦══"
 	midrow = "║" + "║".join(list(map(lambda x: (len(str(x))+2)*" ", m))) + "║  "
@@ -83,9 +100,12 @@ def drawState(state):
 	datastrings[mp] = "[" + datastrings[mp][1:-1] + "]"
 	datrow = "║" + "║".join(datastrings) + "║ ..."
 	botrow = "╚" + "╩".join(list(map(lambda x: (len(str(x))+2)*"═", m))) + "╩══"
-	display = toprow + "\n" + midrow + "\n" + datrow + "\n" + midrow + "\n" + botrow + "\n"
-	
-	sys.stdout.write("\033[H")
-	sys.stdout.write(display)
-	sys.stdout.flush()
-	time.sleep(.025)
+	info = "Cycles:    %i\nTape used: %i"%(c,len(m))
+	tape = toprow + "\n" + midrow + "\n" + datrow + "\n" + midrow + "\n" + botrow + "\n" + info + "\n"
+
+	display = "Level %i: %s\n%s\n"%(1,levelInfo[1][0],levelInfo[1][1]) + tape
+	return display
+
+levelInfo = {
+	1 : ("Easy as 1, 2, 3","Write 1 2 3 to the first three cells of the tape.")
+}
